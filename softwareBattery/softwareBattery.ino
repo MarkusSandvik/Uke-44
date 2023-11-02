@@ -1,6 +1,9 @@
 #include <Wire.h>
 #include <Zumo32U4.h>
 
+Zumo32U4OLED display;
+Zumo32U4ButtonA buttonA;
+
 // Variables for softwareBattery
 int8_t batteryLevel = 100;
 long lastDistance = 0;
@@ -90,17 +93,45 @@ void hiddenFeature(){
     } // end if
 } // end void
 
-void showBatteryStatus(){
+void showBatteryStatus(){                               
     unsigned long currentMillis = millis();
 
+    ///////// DISABLE WHILE CHARGING //////////
 
-    if (currentMillis - previousMillis >= interval){
+
+    if (currentMillis - previousMillis >= oninterval){
         display.clear();
+        display.setLayout21x8();                        // Divide screen into 21 columns and 8 rows
+        display.print(F("Battery level"));
+        display.gotoXY(15,0);
         display.print(batteryLevel);
-        display.gotoXY(0,1);
-        display.print(timesCharged);
         display.gotoXY(0,2);
+        display.print(F("Times Charged"));
+        display.gotoXY(15,2);
+        display.print(timesCharged);
+        display.gotoXY(0,4);
+        display.print(F("Battery Health"));
+        display.gotoXY(15,4);
         display.print(batteryHealth);
+        previousMillis = currentMillis;
+        displayTime = currentMillis;
+        batteryDisplayed = true;                        // To make the next if sentence only run once after this text have been ran
     } // end if
 
-}
+    if ((currentMillis - displayTime >= offinterval) && (batteryDisplayed == true)){
+        display.clear();
+        display.setLayout11x4();                        // Divide screen into 11 columns and 4 rows
+        display.print(F("Speed:"));
+        display.gotoXY(0,1);
+        display.print(speedReading);
+        display.gotoXY(7,1);
+        display.print(F("m/s"));
+        display.gotoXY(0,2);
+        display.print(F("Distance:"));
+        display.gotoXY(0,3);
+        display.print(distance);
+        display.gotoXY(7,3);
+        display.print(F("m"));
+        batteryDisplayed = false;
+    } // end if
+} // end void
