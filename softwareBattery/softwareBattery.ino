@@ -1,6 +1,19 @@
 #include <Wire.h>
 #include <Zumo32U4.h>
 
+/////////// NOTES ////////////
+/*
+- Add switchcase for display modes/ buzzer
+- Add switchcase in softwareBattery for special functions
+- Add lineFollower
+- Add switchcase in line follower for turning, job etc.
+-
+
+
+
+
+*/
+
 Zumo32U4OLED display;
 Zumo32U4Encoders encoders;
 Zumo32U4Buzzer buzzer;
