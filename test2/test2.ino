@@ -11,8 +11,9 @@ Zumo32U4ButtonC buttonC;
 // Variables for softwareBattery
 int8_t batteryLevel = 100;
 long lastDistance = 0;
-int8_t consumptionMeasure = 0;
+float consumptionMeasure = 0;
 int8_t timesCharged = 0;
+unsigned long batteryMillis = 0;
 
 // Variables for hiddenFeature()
 bool hiddenActivated = false;
@@ -32,8 +33,14 @@ bool batteryDisplayed = false;
 int16_t previousCountLeft = 0;
 int16_t previousCountRight = 0;
 
+// Variables for regneDistanse()
+int16_t lastAverage = 0;
+long distance = 0;
+unsigned long distanceMillis = 0;
+
+
+
 ///////// TEST VARIABLES ////
-long distance = 100;
 int batteryHealth = 2;
 float iAmSpeed = 0;
 
@@ -48,11 +55,13 @@ void setup(){
     display.print(F("to start"));
     buttonA.waitForButton();
     
-}
+} // end setup
 
 void loop(){
     softwareBattery();
     showBatteryStatus();
+    regneDistanse();
+    speedometer();
     if (buttonA.isPressed())
     {
         motors.setSpeeds(200, 200);
@@ -65,7 +74,7 @@ void loop(){
     {
         motors.setSpeeds(0, 0);
     }
-}
+} // end loop
 
 float speedometer(){
     static uint8_t lastDisplayTime;
@@ -91,17 +100,38 @@ float speedometer(){
     } // end if
 } // end void
 
+void regneDistanse(){
+    int currentMillis = millis();
+
+    if (currentMillis - distanceMillis > 100){
+        // Millis funksjon
+        long countsLeft = encoders.getCountsLeft();     // Get amount of encoder readings
+        long countsRight = encoders.getCountsRight();   
+
+        long average = (countsLeft + countsRight)/2;    // Uses the average of the encoder readings
+
+        float round = 75.81*12;                         // Calculation of wheelrotation
+        int diffAverage = abs(average-lastAverage);     // use the absolute value to count distance both forward and backward
+        distance += (diffAverage/round)*12.5221135;
+        
+        lastAverage = average;                          // Make current readings as reffrence for next run's calculations
+        distanceMillis = currentMillis;
+    } // end if
+} // end void
+
 
 void softwareBattery(){
-    float averageSpeed = speedometer();
-    //Serial.print(averageSpeed);
-    int8_t distanceChange = distance - lastDistance;
-    lastDistance = distance;
+    long currentMillis = millis();
 
-    consumptionMeasure += (averageSpeed / distanceChange); // EKSEMPEL PÅ FUNKSJON, OPPDATER NÅR VI TESTER MED DATA
+    if (currentMillis - batteryMillis > 100){
+    batteryMillis = currentMillis;
+    consumptionMeasure += (abs(iAmSpeed)/30); // EKSEMPEL PÅ FUNKSJON, OPPDATER NÅR VI TESTER MED DATA
+    Serial.print(consumptionMeasure);
+    } // end if
 
     if (consumptionMeasure >= 10){
         batteryLevel -= 1;
+        consumptionMeasure = 0;
     } // end if
 } // end void
 
@@ -153,6 +183,9 @@ void showBatteryStatus(){
     
 
     ///////// DISABLE WHILE CHARGING //////////
+
+    batteryLevel = constrain(batteryLevel, 0, 100);
+
     if (batteryDisplayed == false){
         if (currentMillis - refreshPreviousMillis >= refreshInterval){
             //float speedReading = speedometer();
@@ -168,7 +201,7 @@ void showBatteryStatus(){
             display.gotoXY(0,3);
             display.print(distance);
             display.gotoXY(7,3);
-            display.print(F("m"));
+            display.print(F("cm"));
             refreshPreviousMillis = currentMillis;
         } // end if
     } // end if
