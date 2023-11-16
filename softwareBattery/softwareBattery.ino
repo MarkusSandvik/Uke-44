@@ -9,10 +9,6 @@
 - Add switchcase in line follower for turning, job etc.
 - Add Random based taxi job
 - 
-
-
-
-
 */
 
 Zumo32U4OLED display;
@@ -22,6 +18,7 @@ Zumo32U4Motors motors;
 Zumo32U4ButtonA buttonA;
 Zumo32U4ButtonB buttonB;
 Zumo32U4ButtonC buttonC;
+Zumo32U4LineSensors lineSensors;
 
 // Variables for softwareBattery
 int8_t batteryLevel = 100;
@@ -58,9 +55,14 @@ bool passengerFound = false;
 long searchTime = 0;
 long missionStart = 0;
 int missionDistance = 0;
-int workCase = 2;
+int workCase = 0;
 int startDistance = 0;
 int passengerEntered = 0;
+
+// Variables for followLine
+unsigned int lineSensorValues[5];
+int16_t lastError = 0;
+const uint16_t maxSpeed = 200;
 
 
 
@@ -73,32 +75,24 @@ int bankAccount = 100;
 
 void setup(){
     Serial.begin(9600);
+    lineSensors.initFiveSensors();
+
     // Wait for button A to be pressed and released.
     display.clear();
     display.print(F("Press A"));
     display.gotoXY(0, 1);
     display.print(F("to start"));
     buttonA.waitForButton();
+    calibrateLineSensors();
     
 } // end setup
 
 void loop(){
     softwareBattery();
     showBatteryStatus();
-    regneDistanse();
+    meassureDistance();
     speedometer();
-    if (buttonA.isPressed())
-    {
-        motors.setSpeeds(200, 200);
-    }
-    else if (buttonC.isPressed())
-    {
-        motors.setSpeeds(-400, -400);
-    }
-    else
-    {
-        motors.setSpeeds(0, 0);
-    }
+    followLine();
 } // end loop
 
 float speedometer(){
@@ -125,7 +119,7 @@ float speedometer(){
     } // end if
 } // end void
 
-void regneDistanse(){
+void meassureDistance(){
     int currentMillis = millis();
 
     if (currentMillis - distanceMillis > 100){
@@ -351,3 +345,36 @@ void taxiDriver(){
         break;
     } 
 } // end void
+
+void followLine(){
+    int16_t position = lineSensors.readLine(lineSensorValues);
+    /*display.gotoXY(0,0);
+    display.print(position);*/
+
+    int16_t error = position - 2000;
+    
+    int16_t speedifference = error/4 + 6*(error-lastError);
+
+    lastError = error;
+
+    int leftSpeed = (int16_t)maxSpeed + speedifference;
+    int rightSpeed = (int16_t)maxSpeed - speedifference;
+
+ 
+
+    leftSpeed = constrain(leftSpeed,0,(int16_t)maxSpeed);
+    rightSpeed = constrain(rightSpeed,0,(int16_t)maxSpeed);
+    motors.setSpeeds(leftSpeed,rightSpeed);
+} // end void
+
+void calibrateLineSensors(){
+     delay(1000);
+  for(uint16_t i = 0; i < 100; i++)
+  {
+    motors.setSpeeds(-200, 200);
+    lineSensors.calibrate();
+    }
+   
+  motors.setSpeeds(0, 0);
+  delay(2000);
+}
