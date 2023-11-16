@@ -35,9 +35,6 @@ bool emergencyChargeMode = false;
 // Variables for showBatteryStatus()
 unsigned long previousMillis = 0;
 unsigned long refreshPreviousMillis = 0;
-const long onInterval = 10000;
-const long offInterval = 2000;
-const long refreshInterval = 500;
 long displayTime = 0;
 bool batteryDisplayed = false;
 
@@ -197,13 +194,49 @@ void hiddenFeature(){
     } // end if
 } // end void
 
-void showBatteryStatus(){                               
-    unsigned long currentMillis = millis();
+void showBatteryStatus(){  
+    long onInterval;
+    long offInterval;
+    long refreshInterval;
+    uint8_t batteryCase; 
+  if((batteryLevel < 10) && (batteryLevel > 5)){
+        batteryCase = 0;
+    }else if((batteryLevel < 5) && (batteryLevel > 0)){
+        batteryCase = 1;
+    }else if(batteryLevel == 0){
+        batteryCase = 2;
+    }
+
+
+    switch (batteryCase)
+    {
+    case 0:
+        onInterval = 5000;
+        offInterval = 2000;
+        refreshInterval = 500;
+        break;
+    case 1:
+        onInterval = 2000;
+        offInterval = 1000;
+        refreshInterval = 500;
+        break;
+    case 2:
+        //batteryCase2(); skal være når batteriet er helt utladet. Her må vi kunne legge inn en hidden feature som
+        //gjør at vi kan få litt strøm slik at den kommer seg til ladestasjonen.
+        break;
     
+    default:
+        onInterval = 10000;
+        offInterval = 2000;
+        refreshInterval = 500;
+        break;
+    }
 
-    ///////// DISABLE WHILE CHARGING //////////
 
-    batteryLevel = constrain(batteryLevel, 0, 100);
+
+    unsigned long currentMillis = millis();
+
+
 
     if (batteryDisplayed == false){
         if (currentMillis - refreshPreviousMillis >= refreshInterval){
@@ -240,6 +273,10 @@ void showBatteryStatus(){
         display.print(F("Battery Health"));
         display.gotoXY(15,4);
         display.print(batteryHealth);
+        if(batteryLevel < 10){
+            display.gotoXY(0,6);
+            display.print("Please recharge!");
+        }
         previousMillis = currentMillis;
         displayTime = currentMillis;
         batteryDisplayed = true;                        // To make the next if sentence only run once after this text have been ran
@@ -248,7 +285,8 @@ void showBatteryStatus(){
     if ((currentMillis - displayTime >= offInterval) && (batteryDisplayed == true)){
         batteryDisplayed = false;
     } // end if
-} // end void
+
+}//end void showBatteryStatus
 
 void searchForPassenger(){
 
