@@ -1,70 +1,63 @@
+/* This example reads the raw values from the accelerometer,
+magnetometer, and gyro on the Zumo 32U4, and prints those raw
+values to the serial monitor.
+
+The accelerometer readings can be converted to units of g using
+the sensitivity specified in the LSM303 or LSM6DS33 datasheet.
+The default full-scale (FS) setting is +/- 2 g, so the conversion
+factor is 0.061 mg/LSB (least-significant bit).  A raw reading of
+16384 would correspond to 1 g.
+
+The gyro readings can be converted to degrees per second (dps)
+using the sensitivity specified in the L3GD20H or LSM6DS33
+datasheet.  The default sensitivity is 8.75 mdps/LSB (least-
+significant bit).  A raw reading of 10285 would correspond to
+90 dps.
+
+The magnetometer readings are more difficult to interpret and
+will usually require calibration. */
+
 #include <Wire.h>
 #include <Zumo32U4.h>
 
-/////////// NOTES ////////////
-/*
-- Add switchcase for display modes/ buzzer
-- Add switchcase in softwareBattery for special functions
-- Add lineFollower
-- Add switchcase in line follower for turning, job etc.
--
-*/
+Zumo32U4IMU imu;
 
-// Variables for taxiDriver()
-bool passengerOn = false;
-bool passengerFound = false;
-long searchTime = 0;
-long missionStart = 0;
-int missionDistance = 0;
-int workCase = 2;
+char report[120];
 
-// Test variables
-int bankAccount = 0;
-int distance = 0;
-int payment = 100;
+void setup()
+{
+  Wire.begin();
 
+  if (!imu.init())
+  {
+    // Failed to detect the compass.
+    ledRed(1);
+    while(1)
+    {
+      Serial.println(F("Failed to initialize IMU sensors."));
+      delay(100);
+    }
+  }
 
-Zumo32U4OLED display;
-Zumo32U4Encoders encoders;
-Zumo32U4Buzzer buzzer;
-Zumo32U4Motors motors;
-Zumo32U4ButtonA buttonA;
-Zumo32U4ButtonC buttonC;
-Zumo32U4ButtonB buttonB;
-
-void setup(){
-    Serial.begin(9600);
-    // Wait for button A to be pressed and released.
-    display.clear();
-    display.print(F("Press A"));
-    display.gotoXY(0, 1);
-    display.print(F("to start"));
-    buttonA.waitForButton();
+  imu.enableDefault();
 }
 
-void loop(){
-    bankAccount +=  payment;
-        display.clear();
-        display.setLayout21x8();
-        display.print(F("Passanger delivered"));
-        display.gotoXY(0,2);
-        display.print(F("Payment:"));
-        display.gotoXY(13,2);
-        display.print(payment);
-        display.gotoXY(18,2);
-        display.print(F("kr"));
-        display.gotoXY(0,4);
-        display.print(F("Continue Working?"));
-        display.gotoXY(0,5);
-        display.print(F("A = Search for client"));
-        display.gotoXY(0,6);
-        display.print(F("B = End work"));
-        while ((buttonA.isPressed() == 0) and (buttonB.isPressed() == 0)){
-        } // end while
-        if (buttonA.isPressed() == 1){
-            workCase = 1;
-        } // end if
-        else if (buttonB.isPressed() == 1){
-            workCase = 0;
-        } // end if
+void loop()
+{
+  imu.read();
+
+  /*snprintf_P(report, sizeof(report),
+    PSTR("A: %6d %6d %6d    M: %6d %6d %6d    G: %6d %6d %6d"),
+    imu.a.x, imu.a.y, imu.a.z,
+    imu.m.x, imu.m.y, imu.m.z,
+    imu.g.x, imu.g.y, imu.g.z);
+  Serial.println(report);*/
+  Serial.print(imu.m.x);
+  Serial.print("    ");
+  Serial.print(imu.m.y);
+  Serial.print("    ");
+  Serial.println(imu.m.z);
+
+
+  delay(100);
 }

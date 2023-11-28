@@ -5,10 +5,12 @@
 /*
 - Add switchcase for display modes/ buzzer                              | DONE
 - Add switchcase in softwareBattery for special functions               |
-- Add lineFollower                                                      |
+- Add lineFollower                                                      | DONE
 - Add switchcase in line follower for turning, job etc.                 |
 - Add Random based taxi job                                             | DONE (might need adjustment in payment calculation and random(LOW,HIGH))
 - Fix speed and distance calculation. Use encoders.getCountsAndReset    |
+- Add function to activate / deactivate hiddenfeature
+- Add function to activate emergency charging
 */
 
 Zumo32U4OLED display;
@@ -139,7 +141,6 @@ void meassureDistance(){
     } // end if
 } // end void
 
-
 void softwareBattery(){
     long currentMillis = millis();
 
@@ -155,16 +156,6 @@ void softwareBattery(){
     } // end if
 } // end void
 
-void carNeedCharging(){
-    if (batteryLevel < 10){ // Gir forvarsel med Lyd, lys og display
-
-    } // end if
-
-    if (batteryLevel < 5){ // Stopper hvert 15 sekund og piper
-
-    } // end if
-} // end void
-
 void hiddenFeature(){
     int8_t averageSpeed = speedometer();
     int8_t distanceChange = distance - lastDistance;
@@ -173,7 +164,7 @@ void hiddenFeature(){
 
     // Function to turn on hiddenActivated
 
-    // Function to turn of hiddenActivated
+    // Function to turn off hiddenActivated
 
     // Function to turn on emergencyChargingMode
     
